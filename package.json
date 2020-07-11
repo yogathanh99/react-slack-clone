@@ -21,8 +21,10 @@
     "react-scripts": "3.4.1",
     "redux": "^4.0.0",
     "redux-devtools-extension": "^2.13.5",
+    "redux-thunk": "^2.3.0",
     "semantic-ui-css": "^2.3.3",
     "semantic-ui-react": "^0.82.1",
+    "styled-components": "^5.1.1",
     "uuid": "^3.3.2"
   },
   "scripts": {

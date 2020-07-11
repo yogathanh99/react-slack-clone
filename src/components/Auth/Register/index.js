@@ -123,18 +123,18 @@ const Register = () => {
         data.user
           .updateProfile({
             displayName: formValues.username,
-            photoURL: `https://www.gravatar.com/avatar/${md5(
+            photoURL: `http://gravatar.com/avatar/${md5(
               data.user.email,
             )}?d=identicon`,
           })
           .then(() => {
-            setLoading(false);
             saveUser(data).then(() => {
-              console.log('User saved');
+              console.log('user saved');
+              setLoading(false);
             });
           })
           .catch((err) => {
-            console.log(err);
+            console.error(err);
             setLoading(false);
             setErrors([...errors, err.message]);
           });
@@ -148,7 +148,7 @@ const Register = () => {
 
   const saveUser = (userCreate) => {
     return userRef.child(userCreate.user.uid).set({
-      name: userCreate.user.username,
+      name: userCreate.user.displayName,
       avatar: userCreate.user.photoURL,
     });
   };
@@ -224,7 +224,7 @@ const Register = () => {
             ))}
           </Message>
         )}
-        {errors && (
+        {errors.length !== 0 && (
           <Message error>
             {errors.map((err, i) => (
               <p key={i}>{err}</p>
