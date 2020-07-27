@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Grid, Header, Icon, Dropdown, Image } from 'semantic-ui-react';
 import { connect } from 'react-redux';
 
-import firebase from '../../config/firebase';
+import firebase from 'config/firebase';
 
 const UserPanel = (props) => {
   const [user] = useState(props.currentUser);

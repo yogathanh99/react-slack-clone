@@ -11,8 +11,8 @@ import {
 } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 
-import firebase from '../../../config/firebase';
-import Input from '../../../components/Input';
+import firebase from 'config/firebase';
+import Input from 'components/Input';
 
 const Register = () => {
   const [loading, setLoading] = useState(false);

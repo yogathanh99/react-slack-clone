@@ -10,8 +10,8 @@ import {
 } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 
-import firebase from '../../../config/firebase';
-import Input from '../../../components/Input';
+import firebase from 'config/firebase';
+import Input from 'components/Input';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -93,7 +93,6 @@ const Login = () => {
       .signInWithEmailAndPassword(formValues.email, formValues.password)
       .then((accountLogin) => {
         setLoading(false);
-        console.log(accountLogin);
       })
       .catch((err) => {
         console.error(err);

@@ -3,7 +3,8 @@ import { Menu, Icon, Modal, Form, Input, Button } from 'semantic-ui-react';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
 
-import firebase from '../../config/firebase';
+import firebase from 'config/firebase';
+import * as actions from 'store/actions';
 
 const StyleButtonOpenModal = styled(Icon)`
   cursor: pointer;
@@ -16,22 +17,41 @@ const StyleButtonOpenModal = styled(Icon)`
 
 const Channels = (props) => {
   const [channels, setChannels] = useState([]);
+  const [activeChannel, setActiveChannel] = useState('');
   const [modal, setModal] = useState(false);
   const [channelName, setChannelName] = useState('');
   const [channelDetails, setChannelDetails] = useState('');
   const [channelRef] = useState(firebase.database().ref('channels'));
+  const [firstLoad, setFirstLoad] = useState(true);
 
   useEffect(() => {
     displayChannel();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const displayChannel = () => {
+  useEffect(() => {
+    if (firstLoad && channels.length > 0) {
+      const firstChannel = channels[0];
+
+      props.setCurrentChannel(firstChannel);
+      setActiveChannel(firstChannel.id);
+      setFirstLoad(false);
+    }
+
+    // Disconnect to channels
+    return () => {
+      channelRef.off();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstLoad, channels]);
+
+  const displayChannel = async () => {
     let loadedChannels = [];
 
-    channelRef.on('child_added', (snap) => {
-      loadedChannels = snap.val();
-      setChannels([...channels, loadedChannels]);
+    await channelRef.on('child_added', (snap) => {
+      loadedChannels = [...loadedChannels, snap.val()];
+      setChannels(loadedChannels);
     });
   };
 
@@ -84,6 +104,11 @@ const Channels = (props) => {
       setChannelDetails(e.target.value);
   };
 
+  const handleChangeChannel = (channel) => {
+    props.setCurrentChannel(channel);
+    setActiveChannel(channel.id);
+  };
+
   return (
     <>
       <Menu.Menu>
@@ -99,8 +124,9 @@ const Channels = (props) => {
             <Menu.Item
               key={channel.id}
               name={channel.name}
-              onClick={() => console.log(channel.name)}
+              onClick={() => handleChangeChannel(channel)}
               style={{ opacity: 0.7, cursor: 'pointer' }}
+              active={channel.id === activeChannel}
             >
               # {channel.name}
             </Menu.Item>
@@ -144,6 +170,11 @@ const Channels = (props) => {
 
 const mapStateToProps = (state) => ({
   currentUser: state.user.currentUser,
+  currentChannel: state.channel.currentChannel,
 });
 
-export default connect(mapStateToProps)(Channels);
+const mapDispatchToProps = {
+  setCurrentChannel: actions.setCurrentChannel,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Channels);

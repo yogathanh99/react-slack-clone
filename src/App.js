@@ -2,14 +2,14 @@ import React from 'react';
 import { Switch, Route, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import Home from './pages/Home';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import Spinner from './components/Spinner';
+import Home from 'pages/Home';
+import Login from 'pages/Auth/Login';
+import Register from 'pages/Auth/Register';
+import Spinner from 'components/Spinner';
 
-import * as actions from './store/actions';
+import * as actions from 'store/actions';
 import styled from 'styled-components';
-import firebase from './config/firebase';
+import firebase from 'config/firebase';
 
 // import './App.css';
 
