@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import md5 from 'md5';
 import {
   Grid,
   Form,
@@ -12,30 +11,23 @@ import {
 import { Link } from 'react-router-dom';
 
 import firebase from '../../../config/firebase';
-import Input from '../Input';
+import Input from '../../../components/Input';
 
-const Register = () => {
+const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
-  const [userRef, setUserRef] = useState(firebase.database().ref('users'));
   const [formState, setFormState] = useState({
     formValues: {
-      username: '',
       email: '',
       password: '',
-      passwordConfirm: '',
     },
     formErrors: {
-      username: '',
       email: '',
       password: '',
-      passwordConfirm: '',
     },
     formValidity: {
-      username: false,
       email: false,
       password: false,
-      passwordConfirm: false,
     },
   });
 
@@ -43,10 +35,8 @@ const Register = () => {
     const { name, value } = target;
     const fieldValidationErrors = formState.formErrors;
     const validity = formState.formValidity;
-    const isUsername = name === 'username';
     const isEmail = name === 'email';
     const isPassword = name === 'password';
-    const isPasswordConfirm = name === 'passwordConfirm';
     const emailTest = /\S+@\S+\.\S+/;
     const passwordTest = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{6,}$/gm;
 
@@ -56,12 +46,6 @@ const Register = () => {
       : `${name} is required and cannot be empty`;
 
     if (validity[name]) {
-      if (isUsername) {
-        validity[name] = value.length >= 6;
-        fieldValidationErrors[name] = validity[name]
-          ? ''
-          : `${name} should be 6 characters minimum`;
-      }
       if (isEmail) {
         validity[name] = emailTest.test(value);
         fieldValidationErrors[name] = validity[name]
@@ -73,17 +57,6 @@ const Register = () => {
         fieldValidationErrors[name] = validity[name]
           ? ''
           : `${name} should be 6 characters minimum and have normal, capitalize characters and numbers`;
-      }
-      if (isPasswordConfirm) {
-        validity[name] = passwordTest.test(value);
-        fieldValidationErrors[name] = validity[name]
-          ? ''
-          : `${name} should be 6 characters minimum and have normal, capitalize characters and numbers`;
-
-        fieldValidationErrors[name] =
-          value === formState.formValues.password
-            ? ''
-            : `${name} should be same with password`;
       }
     }
 
@@ -117,40 +90,16 @@ const Register = () => {
     setLoading(true);
     firebase
       .auth()
-      .createUserWithEmailAndPassword(formValues.email, formValues.password)
-      .then((data) => {
-        console.log(data);
-        data.user
-          .updateProfile({
-            displayName: formValues.username,
-            photoURL: `http://gravatar.com/avatar/${md5(
-              data.user.email,
-            )}?d=identicon`,
-          })
-          .then(() => {
-            saveUser(data).then(() => {
-              console.log('user saved');
-              setLoading(false);
-            });
-          })
-          .catch((err) => {
-            console.error(err);
-            setLoading(false);
-            setErrors([...errors, err.message]);
-          });
+      .signInWithEmailAndPassword(formValues.email, formValues.password)
+      .then((accountLogin) => {
+        setLoading(false);
+        console.log(accountLogin);
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
         setLoading(false);
         setErrors([...errors, err.message]);
       });
-  };
-
-  const saveUser = (userCreate) => {
-    return userRef.child(userCreate.user.uid).set({
-      name: userCreate.user.displayName,
-      avatar: userCreate.user.photoURL,
-    });
   };
 
   const handleError = (errors, inputName) => {
@@ -162,20 +111,12 @@ const Register = () => {
   return (
     <Grid textAlign='center' verticalAlign='middle' className='register'>
       <Grid.Column style={{ maxWidth: 450 }}>
-        <Header as='h2' icon color='blue' textAlign='center'>
-          <Icon name='puzzle piece' color='blue' />
-          Register Here
+        <Header as='h1' icon color='blue' textAlign='center'>
+          <Icon name='code branch' color='blue' />
+          Login Here
         </Header>
         <Form size='large' onSubmit={handleSubmit}>
           <Segment stacked>
-            <Input
-              name='username'
-              icon='user'
-              placeholder='Username...'
-              typeInput='text'
-              value={formState.formValues.username}
-              handleChange={handleChange}
-            />
             <Input
               name='email'
               icon='mail'
@@ -194,15 +135,6 @@ const Register = () => {
               handleChange={handleChange}
               className={handleError(errors, 'password')}
             />
-            <Input
-              name='passwordConfirm'
-              icon='repeat'
-              placeholder='Password Confirmation...'
-              typeInput='password'
-              value={formState.formValues.passwordConfirm}
-              handleChange={handleChange}
-              className={handleError(errors, 'password')}
-            />
 
             <Button
               className={loading ? 'loading' : ''}
@@ -212,7 +144,7 @@ const Register = () => {
               type='submit'
               disabled={Object.values(formState.formErrors).some(Boolean)}
             >
-              Register
+              Login
             </Button>
           </Segment>
         </Form>
@@ -232,11 +164,11 @@ const Register = () => {
           </Message>
         )}
         <Message>
-          Already user? <Link to='/login'>Login</Link>
+          Don't have an account? <Link to='/register'>Register</Link>
         </Message>
       </Grid.Column>
     </Grid>
   );
 };
 
-export default Register;
+export default Login;

@@ -2,9 +2,9 @@ import React from 'react';
 import { Switch, Route, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import Home from './components/Home';
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
+import Home from './pages/Home';
+import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
 import Spinner from './components/Spinner';
 
 import * as actions from './store/actions';
@@ -25,6 +25,9 @@ class App extends React.Component {
       if (user) {
         this.props.setUser(user);
         this.props.history.push('/');
+      } else {
+        this.props.history.push('/login');
+        this.props.clearUser();
       }
     });
   }
@@ -50,6 +53,7 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = {
   setUser: actions.setUser,
+  clearUser: actions.clearUser,
 };
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(App));
