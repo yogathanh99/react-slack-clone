@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { connect } from 'react-redux';
 
 import firebase from 'config/firebase';
+import FileModal from 'components/FileModal';
 
 const StyleSegment = styled(Segment)`
   position: fixed !important;
@@ -18,6 +19,7 @@ const MessageForm = (props) => {
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(false);
 
   const { messageRef, currentUser, currentChannel } = props;
 
@@ -58,11 +60,16 @@ const MessageForm = (props) => {
     }
   };
 
+  const toggleModal = () => {
+    setModal(!modal);
+  };
+
   return (
     <StyleSegment>
       <Input
         fluid
         name='message'
+        value={message}
         onChange={handleChange}
         placeholder='Write you message'
         style={{ marginBottom: '.7em' }}
@@ -80,14 +87,17 @@ const MessageForm = (props) => {
           color='orange'
           content='Add Reply'
           labelPosition='left'
+          disabled={loading}
           icon='edit'
         />
         <Button
+          onClick={toggleModal}
           color='teal'
           content='Upload Media'
           labelPosition='right'
           icon='cloud upload'
         />
+        <FileModal modal={modal} closeModal={toggleModal} />
       </Button.Group>
     </StyleSegment>
   );

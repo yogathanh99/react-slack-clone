@@ -28,7 +28,7 @@ const Channels = (props) => {
     displayChannel();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [channels]);
 
   useEffect(() => {
     if (firstLoad && channels.length > 0) {

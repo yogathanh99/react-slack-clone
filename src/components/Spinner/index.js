@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
-  background: #000;
+  background: ${(props) => (props.primary ? '#000' : '#fff')};
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -21,8 +21,11 @@ const Spinner = styled.div`
     height: 64px;
     margin: 8px;
     border-radius: 50%;
-    border: 6px solid #fff;
-    border-color: #fff transparent #fff transparent;
+    border: ${(props) => (props.primary ? '6px solid #fff' : '6px solid #000')};
+    border-color: ${(props) =>
+      props.primary
+        ? '#fff transparent #fff transparent'
+        : '#000 transparent #000 transparent'};
     animation: lds-dual-ring 1.2s linear infinite;
   }
 
@@ -36,10 +39,10 @@ const Spinner = styled.div`
   }
 `;
 
-export default () => {
+export default ({ primary }) => {
   return (
-    <Wrapper>
-      <Spinner />
+    <Wrapper primary={primary}>
+      <Spinner primary={primary} />
     </Wrapper>
   );
 };
