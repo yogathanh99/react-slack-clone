@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Segment, Button, Input } from 'semantic-ui-react';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
+import uuidv4 from 'uuid/v4';
 
 import firebase from 'config/firebase';
 import FileModal from 'components/FileModal';
@@ -15,93 +16,186 @@ const StyleSegment = styled(Segment)`
   z-index: 200;
 `;
 
-const MessageForm = (props) => {
-  const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState(false);
-
-  const { messageRef, currentUser, currentChannel } = props;
-
-  const handleChange = (e) => {
-    setMessage(e.target.value);
+class MessageForm extends React.Component {
+  state = {
+    storageRef: firebase.storage().ref(),
+    uploadTask: null,
+    uploadState: '',
+    percentUploaded: 0,
+    message: '',
+    loading: false,
+    errors: [],
+    modal: false,
   };
 
-  const createMessage = () => ({
-    timestamp: firebase.database.ServerValue.TIMESTAMP,
-    user: {
-      id: currentUser.uid,
-      name: currentUser.displayName,
-      avatar: currentUser.photoURL,
-    },
-    content: message,
-  });
+  handleChange = (event) => {
+    this.setState({ [event.target.name]: event.target.value });
+  };
 
-  const handleSendMessage = () => {
+  toggleModal = () => {
+    this.setState((currentState) => ({ modal: !currentState.modal }));
+  };
+
+  createMessage = (fileUrl = null) => {
+    const { currentUser } = this.props;
+
+    const messageToSend = {
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      user: {
+        id: currentUser.uid,
+        name: currentUser.displayName,
+        avatar: currentUser.photoURL,
+      },
+    };
+
+    if (fileUrl !== null) {
+      messageToSend['image'] = fileUrl;
+    } else {
+      messageToSend['content'] = this.state.message;
+    }
+
+    return messageToSend;
+  };
+
+  handleSendMessage = () => {
+    const { message } = this.state;
+    const { messageRef, currentChannel } = this.props;
+
     if (message) {
-      setLoading(true);
+      this.setState({ loading: true });
 
       messageRef
         .child(currentChannel.id)
         .push()
-        .set(createMessage())
+        .set(this.createMessage())
         .then(() => {
-          setLoading(false);
-          setMessage('');
-          setErrors([]);
+          this.setState({ loading: false, message: '', errors: [] });
         })
         .catch((err) => {
           console.error(err);
-          setLoading(false);
-          setErrors([...errors, err]);
+          this.setState((currentState) => ({
+            loading: false,
+            errors: [...currentState.errors, err],
+          }));
         });
     } else {
-      setErrors([...errors, { message: 'Add a message' }]);
+      this.setState((currentState) => ({
+        errors: [...currentState.errors, { message: 'Add a message' }],
+      }));
     }
   };
 
-  const toggleModal = () => {
-    setModal(!modal);
+  uploadFile = (file, metadata) => {
+    const pathToUpload = this.props.currentChannel.id;
+    const ref = this.props.messageRef;
+    const filePath = `chat/public/${uuidv4()}.jpg`;
+
+    this.setState(
+      {
+        uploadState: 'uploading',
+        uploadTask: this.state.storageRef.child(filePath).put(file, metadata),
+      },
+      () => {
+        this.state.uploadTask.on(
+          'state_changed',
+          (snap) => {
+            const percentUploaded = Math.round(
+              (snap.bytesTransferred / snap.totalBytes) * 100,
+            );
+            this.setState({ percentUploaded });
+          },
+          (err) => {
+            console.error(err);
+            this.setState((currentState) => ({
+              errors: [...currentState.errors, err],
+              uploadState: 'error',
+              uploadTask: null,
+            }));
+          },
+          () => {
+            this.state.uploadTask.snapshot.ref
+              .getDownloadURL()
+              .then((downloadUrl) => {
+                console.log(downloadUrl);
+                this.sendFileMessage(downloadUrl, ref, pathToUpload);
+              })
+              .catch((err) => {
+                console.error(err);
+                this.setState((currentState) => ({
+                  errors: [...currentState.errors, err],
+                  uploadState: 'error',
+                  uploadTask: null,
+                }));
+              });
+          },
+        );
+      },
+    );
   };
 
-  return (
-    <StyleSegment>
-      <Input
-        fluid
-        name='message'
-        value={message}
-        onChange={handleChange}
-        placeholder='Write you message'
-        style={{ marginBottom: '.7em' }}
-        label={<Button icon={'add'} />}
-        labelPosition='left'
-        className={
-          errors.some((err) => err.message.includes('message')) // eslint-disable-next-line
-            ? 'error'
-            : ''
-        }
-      />
-      <Button.Group icon widths='2'>
-        <Button
-          onClick={handleSendMessage}
-          color='orange'
-          content='Add Reply'
+  sendFileMessage = (fileUrl, ref, pathToUpload) => {
+    console.log(ref);
+    ref
+      .child(pathToUpload)
+      .push()
+      .set(this.createMessage(fileUrl))
+      .then(() => {
+        this.setState({ uploadState: 'done' });
+      })
+      .catch((err) => {
+        console.error(err);
+        this.setState((currentState) => ({
+          errors: [...currentState.errors, err],
+        }));
+      });
+  };
+
+  render() {
+    const { message, errors, loading, modal } = this.state;
+
+    return (
+      <StyleSegment>
+        <Input
+          fluid
+          name='message'
+          value={message}
+          onChange={this.handleChange}
+          placeholder='Write you message'
+          style={{ marginBottom: '.7em' }}
+          label={<Button icon={'add'} />}
           labelPosition='left'
-          disabled={loading}
-          icon='edit'
+          className={
+            errors.some((err) => err.message.includes('message')) // eslint-disable-next-line
+              ? 'error'
+              : ''
+          }
         />
-        <Button
-          onClick={toggleModal}
-          color='teal'
-          content='Upload Media'
-          labelPosition='right'
-          icon='cloud upload'
-        />
-        <FileModal modal={modal} closeModal={toggleModal} />
-      </Button.Group>
-    </StyleSegment>
-  );
-};
+        <Button.Group icon widths='2'>
+          <Button
+            onClick={this.handleSendMessage}
+            color='orange'
+            content='Add Reply'
+            labelPosition='left'
+            disabled={loading}
+            icon='edit'
+          />
+          <Button
+            onClick={this.toggleModal}
+            color='teal'
+            content='Upload Media'
+            labelPosition='right'
+            icon='cloud upload'
+          />
+          <FileModal
+            modal={modal}
+            closeModal={this.toggleModal}
+            uploadFile={this.uploadFile}
+          />
+        </Button.Group>
+      </StyleSegment>
+    );
+  }
+}
 
 const mapStateToProps = (state) => ({
   currentUser: state.user.currentUser,
