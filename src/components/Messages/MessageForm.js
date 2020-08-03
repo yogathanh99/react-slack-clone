@@ -6,6 +6,7 @@ import uuidv4 from 'uuid/v4';
 
 import firebase from 'config/firebase';
 import FileModal from 'components/FileModal';
+import ProgressBar from 'components/ProgressBar';
 
 const StyleSegment = styled(Segment)`
   position: fixed !important;
@@ -151,7 +152,14 @@ class MessageForm extends React.Component {
   };
 
   render() {
-    const { message, errors, loading, modal } = this.state;
+    const {
+      message,
+      errors,
+      loading,
+      modal,
+      uploadState,
+      percentUploaded,
+    } = this.state;
 
     return (
       <StyleSegment>
@@ -182,16 +190,20 @@ class MessageForm extends React.Component {
           <Button
             onClick={this.toggleModal}
             color='teal'
+            disabled={uploadState === 'uploading'}
             content='Upload Media'
             labelPosition='right'
             icon='cloud upload'
           />
-          <FileModal
-            modal={modal}
-            closeModal={this.toggleModal}
-            uploadFile={this.uploadFile}
-          />
         </Button.Group>
+        <FileModal
+          modal={modal}
+          closeModal={this.toggleModal}
+          uploadFile={this.uploadFile}
+        />
+        {percentUploaded > 0 && uploadState !== 'done' ? (
+          <ProgressBar percentUploaded={percentUploaded} />
+        ) : null}
       </StyleSegment>
     );
   }
