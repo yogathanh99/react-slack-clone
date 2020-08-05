@@ -60,12 +60,12 @@ class MessageForm extends React.Component {
 
   handleSendMessage = () => {
     const { message } = this.state;
-    const { messageRef, currentChannel } = this.props;
+    const { getMessagesRef, currentChannel } = this.props;
 
     if (message) {
       this.setState({ loading: true });
 
-      messageRef
+      getMessagesRef()
         .child(currentChannel.id)
         .push()
         .set(this.createMessage())
@@ -86,10 +86,18 @@ class MessageForm extends React.Component {
     }
   };
 
+  getPath = () => {
+    const { currentChannel, isPrivateChannel } = this.props;
+
+    return isPrivateChannel
+      ? `chat/private-${currentChannel.id}`
+      : `chat/public`;
+  };
+
   uploadFile = (file, metadata) => {
     const pathToUpload = this.props.currentChannel.id;
-    const ref = this.props.messageRef;
-    const filePath = `chat/public/${uuidv4()}.jpg`;
+    const ref = this.props.getMessagesRef();
+    const filePath = `${this.getPath()}/${uuidv4()}.jpg`;
 
     this.setState(
       {
@@ -117,7 +125,6 @@ class MessageForm extends React.Component {
             this.state.uploadTask.snapshot.ref
               .getDownloadURL()
               .then((downloadUrl) => {
-                console.log(downloadUrl);
                 this.sendFileMessage(downloadUrl, ref, pathToUpload);
               })
               .catch((err) => {
@@ -135,7 +142,6 @@ class MessageForm extends React.Component {
   };
 
   sendFileMessage = (fileUrl, ref, pathToUpload) => {
-    console.log(ref);
     ref
       .child(pathToUpload)
       .push()

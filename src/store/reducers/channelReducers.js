@@ -2,6 +2,8 @@ import * as actionTypes from '../actions/actionTypes';
 
 const initState = {
   currentChannel: null,
+  isPrivateChannel: false,
+  isActiveChannel: null,
 };
 
 const channelReducers = (state = initState, action) => {
@@ -10,6 +12,16 @@ const channelReducers = (state = initState, action) => {
       return {
         ...state,
         currentChannel: action.payload.currentChannel,
+      };
+    case actionTypes.SET_PRIVATE_CHANNEL:
+      return {
+        ...state,
+        isPrivateChannel: action.payload.isPrivateChannel,
+      };
+    case actionTypes.SET_ACTIVE_CHANNEL:
+      return {
+        ...state,
+        isActiveChannel: action.payload.isActiveChannel,
       };
     default:
       return state;

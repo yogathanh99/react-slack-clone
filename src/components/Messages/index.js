@@ -16,6 +16,9 @@ const StyleScroll = styled(ScrollToBottom)`
 
 const Messages = (props) => {
   const [messageRef] = useState(firebase.database().ref('messages'));
+  const [privateMessageRef] = useState(
+    firebase.database().ref('privateMessages'),
+  );
   const [messages, setMessages] = useState([]);
   const [prevChannel, setPrevChannel] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(true);
@@ -23,7 +26,7 @@ const Messages = (props) => {
   const [searchResult, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const { currentChannel, currentUser } = props;
+  const { currentChannel, currentUser, isPrivateChannel } = props;
 
   useEffect(() => {
     let loadedMessages = [];
@@ -33,15 +36,21 @@ const Messages = (props) => {
     }
 
     if (currentUser && currentChannel) {
-      messageRef.child(currentChannel.id).on('child_added', (snap) => {
-        loadedMessages = [...loadedMessages, snap.val()];
+      getMessagesRef()
+        .child(currentChannel.id)
+        .on('child_added', (snap) => {
+          loadedMessages = [...loadedMessages, snap.val()];
 
-        setMessages(loadedMessages);
-        setMessagesLoading(false);
-      });
+          setMessages(loadedMessages);
+          setMessagesLoading(false);
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChannel]);
+
+  const getMessagesRef = () => {
+    return isPrivateChannel ? privateMessageRef : messageRef;
+  };
 
   const countUniqueUser = (messages) => {
     if (messages.length > 0) {
@@ -94,6 +103,7 @@ const Messages = (props) => {
   return (
     <>
       <MessagesHeader
+        isPrivateChannel={isPrivateChannel}
         channel={currentChannel}
         uniqueUsers={countUniqueUser(messages)}
         handleSearchMessages={handleSearchMessages}
@@ -111,7 +121,10 @@ const Messages = (props) => {
           </Comment.Group>
         </StyleScroll>
       </Segment>
-      <MessageForm messageRef={messageRef} />
+      <MessageForm
+        getMessagesRef={getMessagesRef}
+        isPrivateChannel={isPrivateChannel}
+      />
     </>
   );
 };
@@ -119,6 +132,7 @@ const Messages = (props) => {
 const mapStateToProps = (state) => ({
   currentUser: state.user.currentUser,
   currentChannel: state.channel.currentChannel,
+  isPrivateChannel: state.channel.isPrivateChannel,
 });
 
 export default connect(mapStateToProps)(Messages);
