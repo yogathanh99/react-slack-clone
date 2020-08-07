@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 import UserPanel from './UserPanel';
 import Channels from './Channels';
+import StarChannels from './StarChannels';
 import DirectMessages from './DirectMessages';
 
 const StyleMenu = styled(Menu)`
@@ -15,6 +16,7 @@ const SidePanel = () => {
   return (
     <StyleMenu size='large' inverted fixed='left' vertical>
       <UserPanel />
+      <StarChannels />
       <Channels />
       <DirectMessages />
     </StyleMenu>

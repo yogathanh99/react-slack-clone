@@ -102,19 +102,24 @@ const Messages = (props) => {
 
   return (
     <>
-      <MessagesHeader
-        isPrivateChannel={isPrivateChannel}
-        channel={currentChannel}
-        uniqueUsers={countUniqueUser(messages)}
-        handleSearchMessages={handleSearchMessages}
-        loading={searchLoading}
-      />
+      {currentChannel ? (
+        <MessagesHeader
+          isPrivateChannel={isPrivateChannel}
+          channel={currentChannel}
+          user={currentUser}
+          uniqueUsers={countUniqueUser(messages)}
+          handleSearchMessages={handleSearchMessages}
+          loading={searchLoading}
+        />
+      ) : (
+        <Segment>Loading...</Segment>
+      )}
 
       <Segment>
         <StyleScroll>
           <Comment.Group>
             {messagesLoading
-              ? null
+              ? 'Loading...'
               : searchTerm.length > 0
               ? displayMessages(searchResult)
               : displayMessages(messages)}

@@ -120,7 +120,7 @@ class DirectMessages extends React.Component {
           >
             <Icon
               style={{ float: 'left', margin: '0 .5em 0 0' }}
-              name='circle'
+              name={user.status === 'online' ? 'circle' : 'circle outline'}
               color={user.status === 'online' ? 'green' : 'red'}
             />
             {user.name}
