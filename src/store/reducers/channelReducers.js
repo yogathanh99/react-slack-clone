@@ -4,6 +4,7 @@ const initState = {
   currentChannel: null,
   isPrivateChannel: false,
   isActiveChannel: null,
+  userPosts: null,
 };
 
 const channelReducers = (state = initState, action) => {
@@ -22,6 +23,11 @@ const channelReducers = (state = initState, action) => {
       return {
         ...state,
         isActiveChannel: action.payload.isActiveChannel,
+      };
+    case actionTypes.SET_USER_POSTS:
+      return {
+        ...state,
+        userPosts: action.payload.userPosts,
       };
     default:
       return state;

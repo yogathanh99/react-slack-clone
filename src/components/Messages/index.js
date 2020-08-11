@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import ScrollToBottom from 'react-scroll-to-bottom';
 
 import firebase from 'config/firebase';
+import * as actions from 'store/actions';
 import MessagesHeader from './MessagesHeader';
 import MessageForm from './MessageForm';
 import Message from './Message';
@@ -26,7 +27,7 @@ const Messages = (props) => {
   const [searchResult, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const { currentChannel, currentUser, isPrivateChannel } = props;
+  const { currentChannel, currentUser, isPrivateChannel, setUserPosts } = props;
 
   useEffect(() => {
     let loadedMessages = [];
@@ -47,6 +48,25 @@ const Messages = (props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChannel]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      let userPosts = messages.reduce((result, message) => {
+        if (message.user.name in result) {
+          result[message.user.name].count += 1;
+        } else {
+          result[message.user.name] = {
+            avatar: message.user.avatar,
+            count: 1,
+          };
+        }
+        return result;
+      }, {});
+
+      setUserPosts(userPosts);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
 
   const getMessagesRef = () => {
     return isPrivateChannel ? privateMessageRef : messageRef;
@@ -140,4 +160,8 @@ const mapStateToProps = (state) => ({
   isPrivateChannel: state.channel.isPrivateChannel,
 });
 
-export default connect(mapStateToProps)(Messages);
+const mapDispatchToProps = {
+  setUserPosts: actions.setUserPosts,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Messages);
