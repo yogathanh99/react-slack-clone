@@ -8,12 +8,12 @@ import Messages from 'components/Messages';
 import MetalPanel from 'components/MetalPanel';
 
 const Home = (props) => {
-  const { currentChannel } = props;
+  const { currentChannel, primaryColor, secondaryColor } = props;
 
   return (
-    <Grid columns='equal' style={{ background: '#eee' }}>
+    <Grid columns='equal' style={{ background: secondaryColor }}>
       <ColorPanel />
-      <SidePanel />
+      <SidePanel primaryColor={primaryColor} />
       <Grid.Column style={{ marginLeft: 320 }}>
         <Messages />
       </Grid.Column>
@@ -26,6 +26,8 @@ const Home = (props) => {
 
 const mapStateToProps = (state) => ({
   currentChannel: state.channel.currentChannel,
+  primaryColor: state.color.primaryColor,
+  secondaryColor: state.color.secondaryColor,
 });
 
 export default connect(mapStateToProps)(Home);
