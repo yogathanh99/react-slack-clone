@@ -166,9 +166,14 @@ class MessageForm extends React.Component {
       });
   };
 
-  handleKeyDown = () => {
+  handleKeyDown = (e) => {
     const { message, typingRef } = this.state;
     const { currentChannel, currentUser } = this.props;
+
+    // if (e.metaKey && e.keyCode === 13) this.handleSendMessage();
+    // Handle Enter key to send Message
+    if (e.keyCode === 13) this.handleSendMessage();
+
     if (message) {
       typingRef
         .child(currentChannel.id)
