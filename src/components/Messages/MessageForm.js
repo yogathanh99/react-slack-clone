@@ -3,6 +3,8 @@ import { Segment, Button, Input } from 'semantic-ui-react';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
 import uuidv4 from 'uuid/v4';
+import { Picker, emojiIndex } from 'emoji-mart';
+import 'emoji-mart/css/emoji-mart.css';
 
 import firebase from 'config/firebase';
 import FileModal from 'components/FileModal';
@@ -20,6 +22,7 @@ const StyleSegment = styled(Segment)`
 class MessageForm extends React.Component {
   state = {
     storageRef: firebase.storage().ref(),
+    typingRef: firebase.database().ref('typing'),
     uploadTask: null,
     uploadState: '',
     percentUploaded: 0,
@@ -27,6 +30,7 @@ class MessageForm extends React.Component {
     loading: false,
     errors: [],
     modal: false,
+    isToggleEmoji: false,
   };
 
   handleChange = (event) => {
@@ -59,8 +63,8 @@ class MessageForm extends React.Component {
   };
 
   handleSendMessage = () => {
-    const { message } = this.state;
-    const { getMessagesRef, currentChannel } = this.props;
+    const { message, typingRef } = this.state;
+    const { getMessagesRef, currentChannel, currentUser } = this.props;
 
     if (message) {
       this.setState({ loading: true });
@@ -71,6 +75,11 @@ class MessageForm extends React.Component {
         .set(this.createMessage())
         .then(() => {
           this.setState({ loading: false, message: '', errors: [] });
+          // prettier-ignore
+          typingRef 
+            .child(currentChannel.id)
+            .child(currentUser.uid)
+            .remove()
         })
         .catch((err) => {
           console.error(err);
@@ -157,6 +166,56 @@ class MessageForm extends React.Component {
       });
   };
 
+  handleKeyDown = () => {
+    const { message, typingRef } = this.state;
+    const { currentChannel, currentUser } = this.props;
+    if (message) {
+      typingRef
+        .child(currentChannel.id)
+        .child(currentUser.uid)
+        .set(currentUser.displayName);
+    } else {
+      // prettier-ignore
+      typingRef
+        .child(currentChannel.id)
+        .child(currentUser.uid)
+        .remove()
+    }
+  };
+
+  handleToggleEmoji = () => {
+    this.setState((currentState) => ({
+      isToggleEmoji: !currentState.isToggleEmoji,
+    }));
+  };
+
+  handleAddEmoji = (emoji) => {
+    const oldMessage = this.state.message;
+    const newMessage = this.colonMessageToUnicode(
+      `${oldMessage} ${emoji.colons} `,
+    );
+    this.setState((currentState) => ({
+      message: newMessage,
+      isToggleEmoji: !currentState.isToggleEmoji,
+    }));
+    setTimeout(() => this.messageInputRef.focus(), 0);
+  };
+
+  colonMessageToUnicode = (message) => {
+    return message.replace(/:[A-Za-z0-9_+-]+:/g, (x) => {
+      x = x.replace(/:/g, '');
+      let emoji = emojiIndex.emojis[x];
+      if (typeof emoji !== 'undefined') {
+        let unicode = emoji.native;
+        if (typeof unicode !== 'undefined') {
+          return unicode;
+        }
+      }
+      x = ':' + x + ':';
+      return x;
+    });
+  };
+
   render() {
     const {
       message,
@@ -165,18 +224,40 @@ class MessageForm extends React.Component {
       modal,
       uploadState,
       percentUploaded,
+      isToggleEmoji,
     } = this.state;
 
     return (
       <StyleSegment>
+        {isToggleEmoji && (
+          <Picker
+            darkMode={false}
+            set='apple'
+            emoji='point_up'
+            title='Pick your emoji'
+            onSelect={this.handleAddEmoji}
+            style={{
+              position: 'absolute',
+              bottom: '100px',
+            }}
+          />
+        )}
         <Input
           fluid
           name='message'
           value={message}
           onChange={this.handleChange}
+          onKeyDown={this.handleKeyDown}
           placeholder='Write you message'
           style={{ marginBottom: '.7em' }}
-          label={<Button icon={'add'} />}
+          ref={(node) => (this.messageInputRef = node)}
+          label={
+            <Button
+              icon={isToggleEmoji ? 'close' : 'add'}
+              content={isToggleEmoji ? 'Close' : null}
+              onClick={this.handleToggleEmoji}
+            />
+          }
           labelPosition='left'
           className={
             errors.some((err) => err.message.includes('message')) // eslint-disable-next-line
